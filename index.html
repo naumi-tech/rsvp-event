@@ -239,7 +239,7 @@
         <textarea id="message" name="message"></textarea>
       </div>
 
-      <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <input class="hp" type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true">
 
       <button type="submit" id="submit">Send RSVP</button>
       <p class="msg" id="msg" role="status"></p>
@@ -254,6 +254,9 @@
 <footer>Aqeeqah of Zeba Nauman · December 19, 2026</footer>
 
 <script>
+  // Formspree form endpoint, e.g. "https://formspree.io/f/abcdwxyz".
+  var FORM_ENDPOINT = "";
+
   // Calendar file
   (function () {
     var ics = [
@@ -287,12 +290,15 @@
     if (!form.name.value.trim()) return fail("Please enter your name.", form.name);
     if (!form.attending.value) return fail("Please let us know if you can attend.");
 
-    var data = Object.fromEntries(new FormData(form));
-    if (data.attending === "No") { data.adults = "0"; data.children = "0"; }
+    var data = new FormData(form);
+    if (form.attending.value === "No") { data.set("adults", "0"); data.set("children", "0"); }
+    data.append("_subject", "Aqeeqah RSVP: " + form.name.value.trim() + " (" + form.attending.value + ")");
+
+    if (!FORM_ENDPOINT) return fail("RSVPs aren't open yet. Please check back soon.");
 
     submit.disabled = true;
     submit.textContent = "Sending…";
-    fetch("/api/rsvp", { method: "POST", body: JSON.stringify(data), headers: { "Content-Type": "application/json" } })
+    fetch(FORM_ENDPOINT, { method: "POST", body: data, headers: { Accept: "application/json" } })
       .then(function (res) {
         if (!res.ok) throw new Error();
         form.classList.add("hidden");
